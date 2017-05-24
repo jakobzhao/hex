@@ -34,6 +34,8 @@
 <script type="text/javascript">
     // https://github.com/Asymmetrik/leaflet-d3/blob/master/README.md
     // http://bl.ocks.org/tnightingale/4668062
+    // http://www.delimited.io/blog/2013/12/1/hexbins-with-d3-and-leaflet-maps
+    // http://projects.delimited.io/experiments/hexbins/starbucks.html
     var map = L.map("map", {zoomControl: false}).setView([40,-100], 5);
 
     // construct a base map in light color.
@@ -62,9 +64,15 @@
         radiusRange: [ 5, 10 ],
         duration: 500,
         colorScaleExtent: [ 1, undefined ],
-        colorRange: colorbrewer["YlOrRd"][5]
+        colorRange: colorbrewer["YlOrRd"][5],
+        pointerEvents: 'auto'
     };
     var hexLayer = L.hexbinLayer(options).addTo(map);
+
+    hexLayer.dispatch()
+        .on('mouseover', function(d, i) { console.log("ttt"); })
+        .on('mouseout', function(d, i) { console.log("ttt"); })
+        .on('click', function(d, i) { console.log("ttt"); });
 
     function generateData() {
         var data = [];
@@ -76,6 +84,8 @@
         hexLayer.data(data);
     }
     generateData();
+
+
 
 
 </script>
