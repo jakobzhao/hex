@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
@@ -31,144 +32,143 @@
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="js/jqcloud.js"></script>
 </head>
+
 <body>
 
-<!--map container-->
-<div id="map" class="main" ></div>
+    <!--map container-->
+    <div id="map" class="main"></div>
 
-<div id="cloud" class="sidebar" >
-</div>
-<script type="text/javascript">
+    <div id="cloud" class="sidebar">
+    </div>
+    <script type="text/javascript">
+        // https://github.com/Asymmetrik/leaflet-d3/blob/master/README.md
+        // http://bl.ocks.org/tnightingale/4668062
+        // http://www.delimited.io/blog/2013/12/1/hexbins-with-d3-and-leaflet-maps
+        // http://projects.delimited.io/experiments/hexbins/starbucks.html
+        var map = L.map("map", {
+            zoomControl: false
+        }).setView([40, -100], 5);
 
-    // https://github.com/Asymmetrik/leaflet-d3/blob/master/README.md
-    // http://bl.ocks.org/tnightingale/4668062
-    // http://www.delimited.io/blog/2013/12/1/hexbins-with-d3-and-leaflet-maps
-    // http://projects.delimited.io/experiments/hexbins/starbucks.html
-    var map = L.map("map", {zoomControl: false}).setView([40,-100], 5);
-
-    // construct a base map in light color.
-    L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png').addTo(map);
-
-
-    var filter = crossfilter(fb.features); //filter is the root object of crossfilter
-    var all = filter.groupAll();  // study some of the key functions of crossfilter, such as groupAll, dimension
-    var everything = filter.dimension(function(d) {
-        return d
-    });
-
-    var geomDimension = filter.dimension(function(d) {
-        return d.geometry
-    });
+        // construct a base map in light color.
+        L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png').addTo(map);
 
 
-//    var earthquakeCount = dc.dataCount('.dc-data-count');
-//    earthquakeCount
-//        .dimension(filter)
-//        .group(all)
-//        .html({
-//            some: '<strong>%filter-count</strong> selected out of <strong>%total-count</strong> records' +
-//            ' | <a href=\'javascript:dc.filterAll(); dc.renderAll();\'>Reset All</a>', // a piece of javacript code can be executed in a href parameters.
-//            all: 'All records selected. Please click on the graph or change the map view to apply filters.'
-//        });
+        var filter = crossfilter(fb.features); //filter is the root object of crossfilter
+        var all = filter.groupAll(); // study some of the key functions of crossfilter, such as groupAll, dimension
+        var everything = filter.dimension(function(d) {
+            return d
+        });
+
+        var geomDimension = filter.dimension(function(d) {
+            return d.geometry
+        });
 
 
-    function wordFrequency(txt){
+        function wordFrequency(txt) {
 
-        var normal_words = [
-            "to", "that", "this", "I", "them", "do", "This",
-            "the", "do", "See", "The", "and", "has", "have",
-            "me", "we", "who", "what", "out", "Will", "on",
-            "are", "s", "not", "may", "been", "you", "it"
-        ];
+            var normal_words = [
+                "to", "that", "this", "them", "do", "This", "SO", "at",
+                "the", "do", "See", "The", "and", "has", "have", "can",
+                "me", "we", "who", "what", "out", "Will", "on", "is",
+                "are", "s", "not", "may", "been", "you", "it", "in"
+            ];
 
 
-        for (var i = 0; i < normal_words.length; i++) {
-            txt = txt.replace(normal_words[i], "");
-        }
+            //        for (var i = 0; i < normal_words.length; i++) {
+            //            txt = txt.replace(normal_words[i], "");
+            //        }
 
-        txt = txt.replace("  ", "");
+            //txt = txt.replace("  ", "");
 
-        var wordArray = txt.split(/[ .?!,*'"]/);
-        var newArray = [], wordObj;
-        wordArray.forEach(function (word) {
-            wordObj = newArray.filter(function (w){
-                return w.text == word;
+            var wordArray = txt.split(/[ .?!,*'"]/);
+            var newArray = [],
+                wordObj;
+            wordArray.forEach(function(word) {
+                wordObj = newArray.filter(function(w) {
+                    return w.text == word;
+                });
+                if (wordObj.length) {
+                    wordObj[0].weight += 1;
+                } else {
+                    // if (!normal_words.includes(word)) {
+                    newArray.push({
+                        text: word,
+                        weight: 1
+                    });
+                    //}
+                }
             });
-            if (wordObj.length) {
-                wordObj[0].weight += 1;
-            } else {
-                newArray.push({text: word, weight: 1});
-            }
-        });
-        return newArray;
-    }
-
-
-    var options = {
-        opacity: 0.8,
-        radiusRange: [ 5, 10 ],
-        duration: 500,
-        colorScaleExtent: [ 1, undefined ],
-        colorRange: colorbrewer["YlOrRd"][5],
-        pointerEvents: 'auto'
-    };
-
-    var hexLayer = L.hexbinLayer(options).addTo(map);
-
-
-    function generateData() {
-        var data = [];
-        var geo = geomDimension.top(Infinity);
-        for(var i = 0; i < geo.length; i++) {
-            lng = geo[i].geometry.coordinates[1];
-            lat = geo[i].geometry.coordinates[0];
-            data.push([ lat, lng ]);
+            return newArray;
         }
-        hexLayer.data(data);
-    }
-    generateData();
 
 
-    function updateMap() {
+        var options = {
+            opacity: 0.8,
+            radiusRange: [5, 10],
+            duration: 500,
+            colorScaleExtent: [1, undefined],
+            colorRange: colorbrewer["YlOrRd"][5],
+            pointerEvents: 'auto'
+        };
 
-        hexLayer.data([]);
-        generateData();
-    }
-
-    //map listeners
-    map.on('moveend', function() {
-        updateMapFilter()
-    });
-    map.on('zoomend', function() {
-        updateMapFilter()
-    });
+        var hexLayer = L.hexbinLayer(options).addTo(map);
 
 
-    function updateMapFilter() {
-        geomDimension.filter(function(d) {
-            return map.getBounds().contains(L.geoJSON(d).getBounds())
-        });
-        var texts = "";
-        everything.filter(function(d) {
-            if (map.getBounds().contains(L.geoJSON(d.geometry).getBounds())) {
-                texts += (" " + d.properties.content);
-
+        function generateData() {
+            var data = [];
+            var geo = geomDimension.top(Infinity);
+            for (var i = 0; i < geo.length; i++) {
+                lng = geo[i].geometry.coordinates[1];
+                lat = geo[i].geometry.coordinates[0];
+                data.push([lat, lng]);
             }
+            hexLayer.data(data);
+        }
+        generateData();
+
+
+        function updateMap() {
+
+            hexLayer.data([]);
+            generateData();
+        }
+
+        //map listeners
+        map.on('moveend', function() {
+            updateMapFilter()
+        });
+        map.on('zoomend', function() {
+            updateMapFilter()
         });
 
 
+        function updateMapFilter() {
+            geomDimension.filter(function(d) {
+                return map.getBounds().contains(L.geoJSON(d).getBounds())
+            });
+            var texts = "";
+            everything.filter(function(d) {
+                if (map.getBounds().contains(L.geoJSON(d.geometry).getBounds())) {
+                    texts += (" " + d.properties.content);
 
-        frequency_list = wordFrequency(texts);
-        $('#cloud').jQCloud('destroy');
-        $('#cloud').jQCloud(frequency_list,{
-           // shape: 'rectangular',
-           // colors: ["#800026", "#bd0026", "#e31a1c", "#fc4e2a", "#fd8d3c", "#feb24c", "#fed976", "#ffeda0", "#ffffcc"]
-        });
+                }
+            });
 
-    }
 
-    updateMapFilter();
-</script>
+
+            frequency_list = wordFrequency(texts);
+            $('#cloud').jQCloud('destroy');
+            $('#cloud').jQCloud(frequency_list, {
+                // shape: 'rectangular',
+                // colors: ["#800026", "#bd0026", "#e31a1c", "#fc4e2a", "#fd8d3c", "#feb24c", "#fed976", "#ffeda0", "#ffffcc"]
+            });
+
+        }
+
+        updateMapFilter();
+
+    </script>
 
 </body>
+
 </html>
